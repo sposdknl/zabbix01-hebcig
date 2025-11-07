@@ -1,0 +1,60 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  # Použití Debian 11 (Bullseye) boxu
+  config.vm.box = "debian/bullseye64"
+  
+  # Nastavení hostname
+  config.vm.hostname = "debian-klimat"
+  
+  # --- Síť ---
+  # Adapter 1: NAT pro SSH a internet
+  config.vm.network "forwarded_port", guest: 22, host: 2222, auto_correct: true
+  # Přidání port forwardingu pro Zabbix Agent (guest 10050 -> host 10050)
+  config.vm.network "forwarded_port", guest: 10050, host: 10050, auto_correct: true
+
+  # Adapter 2: Private network (volitelné, můžeš použít pro přístup jen z hosta)
+  config.vm.network "private_network", ip: "192.168.56.3"
+
+  # Nastavení VirtualBox
+  config.vm.provider "virtualbox" do |vb|
+    vb.name = "debian-klimat"
+    vb.memory = "2048"  # 2GB RAM
+    vb.cpus = 2         # 2 CPU jádra
+  end
+
+  # --- Přidání veřejného SSH klíče ---
+  ssh_pub_key_path = "C:/zabbix/.ssh/id_rsa_openssh.pub".encode('utf-8')
+
+  if File.exist?(ssh_pub_key_path)
+    ssh_pub_key = File.readlines(ssh_pub_key_path).first.strip
+  else
+    raise "Soubor veřejného SSH klíče nenalezen: #{ssh_pub_key_path}"
+  end
+  
+  config.vm.provision "shell" do |s|
+    s.inline = <<-SHELL
+      echo "=== Přidávání SSH klíče ==="
+      mkdir -p /home/vagrant/.ssh
+      echo "#{ssh_pub_key}" >> /home/vagrant/.ssh/authorized_keys
+      chmod 700 /home/vagrant/.ssh
+      chmod 600 /home/vagrant/.ssh/authorized_keys
+      chown -R vagrant:vagrant /home/vagrant/.ssh
+      echo "SSH klíč byl přidán"
+    SHELL
+  end
+
+  # Základní aktualizace systému
+  config.vm.provision "shell", inline: <<-SHELL
+    echo "=== Aktualizace systému ==="
+    apt-get update
+    apt-get upgrade -y
+  SHELL
+
+  # Instalace Zabbix Agent2
+  config.vm.provision "shell", path: "install_zabbix_agent.sh"
+
+  # Konfigurace Zabbix Agent2
+  config.vm.provision "shell", path: "configure_zabbix_agent.sh"
+end
