@@ -1,0 +1,43 @@
+{
+    "zabbix_export": {
+        "version": "7.0",
+        "host_groups": [
+            {
+                "uuid": "ec50fa856fa542bbba85796d423c2e92",
+                "name": "Customer/SPOS"
+            }
+        ],
+        "hosts": [
+            {
+                "host": "klimat",
+                "name": "klimat",
+                "groups": [
+                    {
+                        "name": "Customer/SPOS"
+                    }
+                ],
+                "interfaces": [
+                    {
+                        "ip": "192.168.3.20",
+                        "interface_ref": "if1"
+                    }
+                ],
+                "tags": [
+                    {
+                        "tag": "class",
+                        "value": "os"
+                    },
+                    {
+                        "tag": "OS",
+                        "value": "Linux"
+                    },
+                    {
+                        "tag": "target",
+                        "value": "linux"
+                    }
+                ],
+                "inventory_mode": "DISABLED"
+            }
+        ]
+    }
+}
